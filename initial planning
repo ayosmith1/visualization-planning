@@ -1,0 +1,49 @@
+let seasons = ['2014-15', '2015-16', '2016-17', '2017-18', '2018-19', '2019-20', '2020-21', '2021-22', '2022-23', '2023-24'];
+let wins = [17, 32, 31, 29, 17, 21, 41, 37, 47, 45]; // Example data
+let losses = [65, 50, 51, 53, 65, 45, 31, 45, 35, 37]; // Example data
+
+function setup() {
+  createCanvas(800, 600);
+  background(255);
+  textSize(12);
+  textAlign(CENTER, CENTER);
+}
+
+function draw() {
+  background(255);
+  let margin = 50;
+  let barWidth = (width - 2 * margin) / (seasons.length * 2);
+  let maxGames = 82; // Max number of games in a season
+
+  // Draw axes
+  stroke(0);
+  line(margin, height - margin, width - margin, height - margin); // X-axis
+  line(margin, margin, margin, height - margin); // Y-axis
+
+  // Draw bars
+  for (let i = 0; i < seasons.length; i++) {
+    let x = margin + i * barWidth * 2 + barWidth / 2;
+    let winHeight = map(wins[i], 0, maxGames, 0, height - 2 * margin);
+    let lossHeight = map(losses[i], 0, maxGames, 0, height - 2 * margin);
+
+    // Wins bar
+    fill(0, 0, 255);
+    rect(x, height - margin - winHeight, barWidth, winHeight);
+
+    // Losses bar
+    fill(255, 0, 0);
+    rect(x + barWidth, height - margin - lossHeight, barWidth, lossHeight);
+
+    // Season label
+    fill(0);
+    text(seasons[i], x + barWidth / 2, height - margin + 15);
+  }
+
+  // Y-axis labels
+  for (let i = 0; i <= maxGames; i += 10) {
+    let y = map(i, 0, maxGames, height - margin, margin);
+    text(i, margin - 15, y);
+    stroke(200);
+    line(margin, y, width - margin, y);
+  }
+}
