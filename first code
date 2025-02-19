@@ -1,0 +1,117 @@
+let data = [
+  { season: '2014-15', ppg: 100.0 },
+  { season: '2015-16', ppg: 102.7 },
+  { season: '2016-17', ppg: 105.6 },
+  { season: '2017-18', ppg: 106.3 },
+  { season: '2018-19', ppg: 111.2 },
+  { season: '2019-20', ppg: 110.8 },
+  { season: '2020-21', ppg: 112.1 },
+  { season: '2021-22', ppg: 110.6 },
+  { season: '2022-23', ppg: 114.7 },
+  { season: '2023-24', ppg: 115.2 }
+];
+
+let margin = 60;
+let graphWidth, graphHeight;
+let hoveredIndex = -1;
+let animatedPoints = [];
+
+function setup() {
+  createCanvas(800, 500);
+  graphWidth = width - 2 * margin;
+  graphHeight = height - 2 * margin;
+
+  // Initialize animated positions
+  for (let i = 0; i < data.length; i++) {
+    animatedPoints.push({ x: margin, y: height - margin });
+  }
+}
+
+function draw() {
+  background(240);
+
+  // Draw axes
+  stroke(0);
+  strokeWeight(2);
+  line(margin, margin, margin, height - margin); // Y-axis
+  line(margin, height - margin, width - margin, height - margin); // X-axis
+
+  // Labels
+  fill(0);
+  textSize(14);
+  textAlign(CENTER);
+  text("Average Points Per Game (PPG)", width / 2, margin - 20);
+  textAlign(CENTER, CENTER);
+  text("Seasons", width - margin / 2, height - 30);
+
+  // Find max/min PPG
+  let maxPPG = ceil(max(data.map(d => d.ppg))); // Round up for better scaling
+  let minPPG = floor(min(data.map(d => d.ppg))); // Round down
+  let ppgRange = maxPPG - minPPG;
+  
+  // Draw horizontal grid lines & Y-axis labels
+  stroke(200);
+  textSize(12);
+  textAlign(RIGHT);
+  for (let i = minPPG; i <= maxPPG; i += 2) {
+    let y = map(i, minPPG, maxPPG, height - margin, margin);
+    line(margin, y, width - margin, y);
+    fill(0);
+    noStroke();
+    text(i, margin - 10, y + 5);
+    stroke(200);
+  }
+
+  // Draw X-axis labels (Seasons)
+  textAlign(CENTER);
+  for (let i = 0; i < data.length; i++) {
+    let x = map(i, 0, data.length - 1, margin, width - margin);
+    fill(0);
+    noStroke();
+    text(data[i].season, x, height - margin + 20);
+  }
+
+  // Draw line graph
+  noFill();
+  stroke(50, 100, 200);
+  strokeWeight(3);
+  beginShape();
+  for (let i = 0; i < data.length; i++) {
+    let x = map(i, 0, data.length - 1, margin, width - margin);
+    let y = map(data[i].ppg, minPPG, maxPPG, height - margin, margin);
+
+    // Smooth transition effect
+    animatedPoints[i].x = lerp(animatedPoints[i].x, x, 0.1);
+    animatedPoints[i].y = lerp(animatedPoints[i].y, y, 0.1);
+
+    vertex(animatedPoints[i].x, animatedPoints[i].y);
+  }
+  endShape();
+
+  // Draw points with hover interaction
+  for (let i = 0; i < data.length; i++) {
+    let x = animatedPoints[i].x;
+    let y = animatedPoints[i].y;
+
+    fill(50, 100, 200);
+    if (dist(mouseX, mouseY, x, y) < 10) {
+      hoveredIndex = i;
+      fill(255, 0, 0);
+    }
+    noStroke();
+    ellipse(x, y, 8, 8);
+  }
+
+  // Display tooltip on hover
+  if (hoveredIndex !== -1) {
+    let x = animatedPoints[hoveredIndex].x;
+    let y = animatedPoints[hoveredIndex].y;
+    fill(255);
+    stroke(0);
+    rect(x + 10, y - 30, 80, 25, 5);
+    fill(0);
+    noStroke();
+    textSize(12);
+    text(`${data[hoveredIndex].season}: ${data[hoveredIndex].ppg} PPG`, x + 50, y - 15);
+  }
+}
