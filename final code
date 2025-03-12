@@ -1,0 +1,149 @@
+let data = [
+  { season: '2014-15', ppg: 100.0 },
+  { season: '2015-16', ppg: 102.7 },
+  { season: '2016-17', ppg: 105.6 },
+  { season: '2017-18', ppg: 106.3 },
+  { season: '2018-19', ppg: 111.2 },
+  { season: '2019-20', ppg: 110.8 },
+  { season: '2020-21', ppg: 112.1 },
+  { season: '2021-22', ppg: 110.6 },
+  { season: '2022-23', ppg: 114.7 },
+  { season: '2023-24', ppg: 115.2 }
+];
+
+let margin = 60;
+let graphWidth, graphHeight;
+let hoveredIndex = -1;
+let animatedPoints = [];
+let addDataButton;
+
+function setup() {
+  createCanvas(800, 500);
+  graphWidth = width - 2 * margin;
+  graphHeight = height - 2 * margin;
+
+  // Initialize animated positions for each data point
+  for (let i = 0; i < data.length; i++) {
+    animatedPoints.push({ x: margin, y: height - margin });
+  }
+
+  // Create a button to add new data points interactively
+  addDataButton = createButton("Add Data");
+  addDataButton.position(20, 20);
+  addDataButton.mousePressed(() => {
+    let newSeason = prompt("Enter season (e.g., '2024-25'):");
+    let newPPG = parseFloat(prompt("Enter PPG value:"));
+    if(newSeason && !isNaN(newPPG)){
+      addData({ season: newSeason, ppg: newPPG });
+    }
+  });
+}
+
+function addData(newData) {
+  data.push(newData);
+  // Start the new animated point at the bottom left corner
+  animatedPoints.push({ x: margin, y: height - margin });
+}
+
+function draw() {
+  background(245);
+
+  // Draw axes
+  stroke(0);
+  strokeWeight(2);
+  line(margin, margin, margin, height - margin); // Y-axis
+  line(margin, height - margin, width - margin, height - margin); // X-axis
+
+  // Draw title and labels
+  fill(50);
+  textSize(16);
+  textAlign(CENTER);
+  text("Average Points Per Game (PPG)", width / 2, margin - 30);
+  textSize(12);
+  textAlign(CENTER, CENTER);
+  text("Seasons", width - margin / 2, height - 20);
+
+  // Determine dynamic min and max values for the Y-axis from the data
+  let ppgValues = data.map(d => d.ppg);
+  let maxPPG = ceil(max(ppgValues));
+  let minPPG = floor(min(ppgValues));
+
+  // Add extra padding if the range is too narrow so the graph isn't squished
+  let ppgRange = maxPPG - minPPG;
+  if (ppgRange < 10) {
+    let pad = (10 - ppgRange) / 2;
+    minPPG -= pad;
+    maxPPG += pad;
+    ppgRange = maxPPG - minPPG;
+  }
+
+  // Draw horizontal grid lines and Y-axis labels
+  stroke(200);
+  let numYTicks = 10;
+  for (let i = 0; i <= numYTicks; i++) {
+    let t = i / numYTicks;
+    let y = lerp(height - margin, margin, t);
+    line(margin, y, width - margin, y);
+    fill(50);
+    noStroke();
+    let label = nf(lerp(minPPG, maxPPG, t), 0, 1);
+    text(label, margin - 10, y);
+    stroke(200);
+  }
+
+  // Draw X-axis labels (the season names)
+  textAlign(CENTER);
+  for (let i = 0; i < data.length; i++) {
+    let x = map(i, 0, data.length - 1, margin, width - margin);
+    fill(50);
+    noStroke();
+    text(data[i].season, x, height - margin + 15);
+  }
+
+  // Draw the line graph with a smooth transition using animated points
+  noFill();
+  stroke(30, 144, 255);
+  strokeWeight(3);
+  beginShape();
+  for (let i = 0; i < data.length; i++) {
+    let x = map(i, 0, data.length - 1, margin, width - margin);
+    let y = map(data[i].ppg, minPPG, maxPPG, height - margin, margin);
+
+    // Smoothly animate each point's transition to its target (x,y)
+    animatedPoints[i].x = lerp(animatedPoints[i].x, x, 0.1);
+    animatedPoints[i].y = lerp(animatedPoints[i].y, y, 0.1);
+
+    vertex(animatedPoints[i].x, animatedPoints[i].y);
+  }
+  endShape();
+
+  // Draw data points with a hover effect
+  hoveredIndex = -1;
+  for (let i = 0; i < data.length; i++) {
+    let x = animatedPoints[i].x;
+    let y = animatedPoints[i].y;
+    let d = dist(mouseX, mouseY, x, y);
+    if (d < 10) {
+      hoveredIndex = i;
+      fill(255, 100, 100);
+    } else {
+      fill(30, 144, 255);
+    }
+    noStroke();
+    ellipse(x, y, 8, 8);
+  }
+
+  // If hovering over a point, display a tooltip with season and PPG info
+  if (hoveredIndex !== -1) {
+    let x = animatedPoints[hoveredIndex].x;
+    let y = animatedPoints[hoveredIndex].y;
+    fill(255);
+    stroke(0);
+    rect(x + 12, y - 32, 100, 28, 5);
+    fill(0);
+    noStroke();
+    textSize(12);
+    textAlign(CENTER, CENTER);
+    text(`${data[hoveredIndex].season}\n${data[hoveredIndex].ppg} PPG`, x + 62, y - 18);
+  }
+}
